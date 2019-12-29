@@ -1,0 +1,75 @@
+Queries με βάση την αναζήτηση με κλειδι // key
+
+// language
+query = "select * from movie " + "where (movie.lang_code in (select languages.lang_code " +
+                                                           "from languages " +
+                                                           "where languages.language_name like " + "'" + searchK + "%'))";
+
+// country
+"select * from movie " + "where (movie.coun_code in (select countries.coun_code " +
+                                                           "from countries " +
+                                                           "where countries.country ~* " + "'" + searchK + "'))";
+
+// movie title
+query = "select * from movie where movie.title ~* " + "'" + searchK + "'";
+
+
+"select movie.title,movie.runtime,movie.plot,movie.release_year,genres.genre,languages.language_name,countries.country "
+                                                         + "from movie, genres, languages, countries "
+                                                         + "where movie.g_code = genres.g_code and movie.lang_code = languages.lang_code and countries.coun_code = movie.coun_code and movie_id=@id", conn);
+
+// actor
+query = " SELECT distinct employee.first_name,employee.last_name,movie.title
+		FROM employee,worked_at,movie " +
+		" WHERE ((employee.first_name ~* "+"'"+searchK+"'"+" or employee.last_name ~* " +"'"+searchK+"')" +" and "+
+		"employee.id IN (SELECT worked_at.employee_id FROM worked_at WHERE worked_at.job_code = 1)
+		and worked_at.movie_id=movie.movie_id and worked_at.employee_id=employee.id)";
+
+// writer
+query = " SELECT employee.last_name,employee.first_name FROM employee " +
+        " WHERE ((employee.first_name ~* " + "'" + searchK + "'" + " or employee.last_name ~* " + "'" + searchK + "')" + " and "
+        + "employee.id IN (SELECT worked_at.employee_id FROM worked_at WHERE worked_at.job_code = 2))";
+
+//director
+query = " SELECT employee.last_name,employee.first_name FROM employee " +
+        " WHERE ((employee.first_name ~* " + "'" + searchK + "'" + " or employee.last_name ~* " + "'" + searchK + "')" + " and "
+        + "employee.id IN (SELECT worked_at.employee_id FROM worked_at WHERE worked_at.job_code = 4))";
+
+		<------------------------------------------------------*------------------------------------------------------>
+
+Τα παρακάτω query επιστρέφουν λεπτομερή στοιχεία για τις ταινίες που εμφανίζονται στο listbox της ResultForm φόρμας.
+
+"select movie.title,movie.runtime,movie.plot,movie.release_year,genres.genre,languages.language_name,countries.country "
++ "from movie, genres, languages, countries "
++ "where movie.g_code = genres.g_code and movie.lang_code = languages.lang_code and countries.coun_code = movie.coun_code and movie_id=@id"
+
+"SELECT employee.last_name,employee.first_name,jobs.job_name "
++ "FROM employee, worked_at, jobs "
++ "WHERE worked_at.employee_id = employee.id and worked_at.job_code = jobs.job_code and worked_at.movie_id = @id"
+
+		<------------------------------------------------------*------------------------------------------------------>
+
+Τα παρακάτω query βασίζεται σε παραμέτρους(ο τύπος των οποίων πρέπει να προσδιοριστεί) και χρησιμοποιείται για
+την κατασκευή μιας εντολής που τα αποτελέσματα της εκτέλεσης της θα εξαρτώνται από τις τιμές αυτών.
+
+1)	Εύρεση του ονόματος χρήστη στη βάση για την εν συνεχεία επαλήθευση του κωδικού του:
+	select username,password from users where username=@x
+
+2)	Καταγραφή των στοιχείων ενός χρήστη στη βάση:
+	insert into users values(@u,@p,@e,@bDay)
+
+3)	Εισαγωγή στη λίστα των ταινιών που επιθυμούμε να παρακολουθήσουμε:
+	"insert into watchlist values(@u,@mid)"
+
+4)	Εύρεση των ταινιών της παραπάνω λίστας:
+	select movie.title,movie.movie_id from movie where movie_id in(select movie_id "
+	+ "from watchlist where username='"+Form1.usernam+"')"
+
+5)	Διαγραφή μίας ταινίας από την παραπάνω λίστα:
+	"delete from watchlist where movie_id=@mid and username=" + "'" + Form1.usernam + "'"
+
+6)	Εισαγωγή της βαθμολογίας μιας ταινίες:
+	insert into rates values(@r,@u,@mid)
+
+7)	Aνανέωση της βαθμολογίας μιας ταινίας που έχει ήδη βαθμολογηθεί:
+	update rates set rating=@r  where username=@u and movie_id =@mid
